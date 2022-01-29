@@ -22,6 +22,10 @@ tasks.reckonTagCreate {
 	dependsOn(tasks.check)
 }
 
+tasks.startScripts {
+	enabled = false
+}
+
 tasks.register("allDeps") {
 	group = "help"
 	description = "List dependencies of all projects"

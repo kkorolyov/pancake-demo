@@ -5,7 +5,9 @@ plugins {
 description = "Demo rendering controllable 2D rectangles"
 
 dependencies {
-	implementation(projects.pancakeDemo)
+	implementation(projects.pancakeDemo) {
+		exclude("org.openjfx")
+	}
 }
 
 sourceSets {

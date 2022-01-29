@@ -5,7 +5,9 @@ plugins {
 description = "Demos collision physics"
 
 dependencies {
-	implementation(projects.pancakeDemo)
+	implementation(projects.pancakeDemo) {
+		exclude("org.openjfx")
+	}
 }
 
 application {

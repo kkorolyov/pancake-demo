@@ -5,7 +5,9 @@ plugins {
 description = "Demo of mouse-controlled physics"
 
 dependencies {
-	implementation(projects.pancakeDemo)
+	implementation(projects.pancakeDemo) {
+		exclude("org.openjfx")
+	}
 }
 
 application {
