@@ -1,0 +1,25 @@
+forceUp:
+  force: [ 0, 3 ]
+forceDown:
+  force: [ 0, -3 ]
+forceLeft:
+  force: [ -3 ]
+forceRight:
+  force: [ 3 ]
+
+reset:
+  position: [ ]
+  orientation: [ ]
+
+moveUp:
+  start: forceUp
+  end: forceDown
+moveDown:
+  start: forceDown
+  end: forceUp
+moveLeft:
+  start: forceLeft
+  end: forceRight
+moveRight:
+  start: forceRight
+  end: forceLeft

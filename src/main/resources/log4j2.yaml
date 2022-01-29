@@ -1,0 +1,29 @@
+configuration:
+  properties:
+    property:
+      - name: pattern
+        value: "%date %level %logger [%thread] - %msg%n"
+      - name: colorPattern
+        value: "%highlight{${pattern}}"
+  appenders:
+    console:
+      name: stdout
+      target: SYSTEM_OUT
+      patternLayout:
+        pattern: ${colorPattern}
+    file:
+      - name: logResources
+        fileName: logs/resources.log
+        patternLayout:
+          pattern: ${pattern}
+  loggers:
+    root:
+      level: debug
+      appenderRef:
+        ref: stdout
+    logger:
+      - name: dev.kkorolyov.pancake.platform.Resources
+        level: info
+        additivity: false
+        appenderRef:
+          ref: logResources

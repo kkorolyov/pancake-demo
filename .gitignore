@@ -1,0 +1,11 @@
+# Build
+build/
+out/
+.gradle/
+
+# IDE
+.idea/
+*.iml
+
+# Resources
+*.log
