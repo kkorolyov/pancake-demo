@@ -52,6 +52,7 @@ val gameEngine = GameEngine(
 	events,
 	entities,
 	listOf(
+		CollisionSystem(),
 		InputSystem(listOf(pane)),
 		ActionSystem(),
 		AccelerationSystem(),
@@ -60,7 +61,6 @@ val gameEngine = GameEngine(
 		ChainSystem(),
 		DampingSystem(),
 		IntersectionSystem(),
-		CollisionSystem(),
 		AudioSystem(),
 		CameraSystem(),
 		DrawSystem()
