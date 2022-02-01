@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
 
       - id: publish
-        uses: kkorolyov/publish-gradle@0.2.1
+        uses: kkorolyov/publish-gradle@0.2.2
         with:
           java-version: ${{ matrix.version }}
           package-task: build
@@ -58,7 +58,7 @@ jobs:
           distribution: zulu
 
       - id: package
-        run: ./gradlew allJpackage "-Pjpackage.version=${{ needs.publish.outputs.version }}"
+        run: ./gradlew allJpackage "-Pjpackage.version=${{ needs.publish.outputs.version }}" --no-daemon
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
