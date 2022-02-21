@@ -1,9 +1,10 @@
-import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.internal.os.OperatingSystem
 
 plugins {
 	kotlin("jvm") version "1.+"
 	id("org.openjfx.javafxplugin") version "0.+"
 	id("org.javamodularity.moduleplugin") version "1.+"
+	id("com.github.jk1.dependency-license-report") version "2.+"
 	id("org.beryx.jlink") version "2.+"
 	id("org.ajoberstar.reckon") version "0.+"
 }
@@ -96,20 +97,46 @@ allprojects {
 }
 
 subprojects {
+	apply(plugin = "com.github.jk1.dependency-license-report")
 	apply(plugin = "org.beryx.jlink")
+
+	licenseReport {
+		excludeBoms = true
+	}
 
 	jlink {
 		forceMerge("jackson", "log4j", "slf4j")
 
+		options.addAll("--compress", "2", "--no-header-files", "--no-man-pages", "--strip-debug")
+
 		jpackage {
 			appVersion = (findProperty("jpackage.version") ?: version).toString()
 
-			icon = if (Os.isFamily(Os.FAMILY_WINDOWS)) "../pancake.ico" else "../pancake.png"
+			icon = "../pancake.${if (OperatingSystem.current().isWindows) "ico" else "png"}"
 
 			val options = mutableListOf("--license-file", "../LICENSE")
-			if (Os.isFamily(Os.FAMILY_WINDOWS)) options += "--win-dir-chooser"
+			if (OperatingSystem.current().isWindows) options += "--win-dir-chooser"
 
-			installerOptions = options.toList()
+			installerOptions.addAll(options.toList())
+
+			jvmArgs.addAll(listOf("-splash:\$APPDIR/splash.png"))
+		}
+	}
+
+	tasks.jpackageImage {
+		dependsOn(tasks.generateLicenseReport)
+
+		doLast {
+			copy {
+				from(rootProject.rootDir)
+				include("pancake.png")
+				rename("pancake", "splash")
+				into("$buildDir/jpackage/${project.name}/app")
+			}
+			copy {
+				from("$buildDir/reports")
+				into("$buildDir/jpackage/${project.name}/runtime/legal")
+			}
 		}
 	}
 }
