@@ -20,7 +20,3 @@ application {
 	mainModule.set("dev.kkorolyov.pancake.demo.wasdbox")
 	mainClass.set("dev.kkorolyov.pancake.demo.wasdbox.LauncherKt")
 }
-tasks.named<JavaExec>("run") {
-	// Launch alongside loose resources
-	workingDir = File("src/dist")
-}

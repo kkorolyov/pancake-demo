@@ -1,0 +1,7 @@
+Language: Cpp
+BasedOnStyle: Google
+AllowShortFunctionsOnASingleLine: None
+AllowShortCaseLabelsOnASingleLine: true
+ColumnLimit: 0
+DerivePointerAlignment: false
+PointerAlignment: Left

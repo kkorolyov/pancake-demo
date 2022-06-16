@@ -1,7 +1,7 @@
 import org.gradle.internal.os.OperatingSystem
 
 plugins {
-	kotlin("jvm") version "1.+"
+	kotlin("jvm") version "1.6.+"
 	id("org.openjfx.javafxplugin") version "0.+"
 	id("org.javamodularity.moduleplugin") version "1.+"
 	id("com.github.jk1.dependency-license-report") version "2.+"
@@ -11,13 +11,16 @@ plugins {
 
 description = "Common demo skeleton"
 
+val osName = if (OperatingSystem.current().isWindows) "windows" else if (OperatingSystem.current().isMacOsX) "macos" else "linux"
+
 tasks.wrapper {
 	distributionType = Wrapper.DistributionType.ALL
 }
 
 reckon {
-	scopeFromProp()
-	snapshotFromProp()
+	stages("rc", "final")
+	setScopeCalc(calcScopeFromProp())
+	setStageCalc(calcStageFromProp())
 }
 tasks.reckonTagCreate {
 	dependsOn(tasks.check)
@@ -44,6 +47,11 @@ dependencies {
 	api(libs.bundles.stdlib)
 	api(libs.bundles.pancake)
 	api(libs.bundles.log)
+
+	val os = OperatingSystem.current()
+	if (os.isWindows) api(libs.bundles.pancake.natives.windows)
+	else if (os.isMacOsX) api(libs.bundles.pancake.natives.macos)
+	else api(libs.bundles.pancake.natives.linux)
 }
 
 allprojects {
@@ -83,6 +91,8 @@ allprojects {
 
 	dependencyLocking {
 		lockAllConfigurations()
+
+		ignoredDependencies.addAll("dev.kkorolyov.pancake:audio-al*", "dev.kkorolyov.pancake:graphics-gl*", "dev.kkorolyov.pancake:input-glfw*")
 	}
 
 	tasks.compileKotlin {
