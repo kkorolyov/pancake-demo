@@ -92,7 +92,7 @@ allprojects {
 	dependencyLocking {
 		lockAllConfigurations()
 
-		ignoredDependencies.addAll("dev.kkorolyov.pancake:audio-al*", "dev.kkorolyov.pancake:graphics-gl*", "dev.kkorolyov.pancake:input-glfw*")
+		ignoredDependencies.addAll("dev.kkorolyov.pancake:audio-al-*", "dev.kkorolyov.pancake:graphics-gl-*", "dev.kkorolyov.pancake:input-glfw-*")
 	}
 
 	tasks.compileKotlin {
