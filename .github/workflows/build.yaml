@@ -88,7 +88,7 @@ jobs:
           cache: gradle
 
       - id: package
-        run: ./gradlew allJpackage "-Pjpackage.version=${{ needs.publish.outputs.version }}" --no-daemon
+        run: ./gradlew allJpackage "-Pjpackage.version=${{ needs.build.outputs.version }}" --no-daemon
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
