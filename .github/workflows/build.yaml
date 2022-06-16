@@ -1,0 +1,116 @@
+name: build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
+
+    strategy:
+      matrix:
+        version:
+          - 17
+
+    steps:
+      - id: checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - id: java
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.version }}
+          distribution: temurin
+          cache: gradle
+
+      - id: verify
+        if: ${{ github.ref != 'refs/heads/master' }}
+        shell: bash
+        run: ./gradlew build --no-daemon
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: tag
+        if: ${{ github.ref == 'refs/heads/master' }}
+        shell: bash
+        run: |
+          msg="${{ github.event.head_commit.message }}"
+
+          case "$msg" in
+            *MAJOR* | *BREAKING*)
+              scope=major
+              ;;
+            *MINOR*)
+              scope=minor
+              ;;
+            *PATCH* | *HOTFIX*)
+              scope=patch
+              ;;
+          esac
+
+          if [ -n "$scope" ]; then
+            ./gradlew reckonTagPush -Preckon.stage=final -Preckon.scope=$scope --no-daemon
+            echo "::set-output name=version::$(git describe)"
+          else
+            ./gradlew build --no-daemon
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  package:
+    runs-on: ${{ matrix.os }}
+    needs: build
+    if: ${{ needs.build.outputs.version != 0 }}
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+        version:
+          - 17
+
+    steps:
+      - id: checkout
+        uses: actions/checkout@v3
+      - id: java
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.version }}
+          distribution: temurin
+          cache: gradle
+
+      - id: package
+        run: ./gradlew allJpackage "-Pjpackage.version=${{ needs.publish.outputs.version }}" --no-daemon
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: pkg-${{ matrix.os }}-jdk${{ matrix.version }}
+          path: "**/build/jpackage/*.*"
+
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - package
+
+    steps:
+      - id: download
+        uses: actions/download-artifact@v2
+
+      - id: release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.build.outputs.version }}
+          generate_release_notes: true
+          files: "**/*.*"
