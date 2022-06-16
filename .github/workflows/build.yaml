@@ -30,6 +30,13 @@ jobs:
           distribution: temurin
           cache: gradle
 
+      - id: verify
+        if: ${{ github.ref != 'refs/heads/master' }}
+        shell: bash
+        run: ./gradlew build --no-daemon
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - id: tag
         if: ${{ github.ref == 'refs/heads/master' }}
         shell: bash
