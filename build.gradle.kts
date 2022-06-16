@@ -121,12 +121,11 @@ subprojects {
 
 		jpackage {
 			appVersion = (findProperty("jpackage.version") ?: version).toString()
+			vendor = "kkorolyov"
+			icon = "${rootProject.rootDir}/pancake.${if (OperatingSystem.current().isWindows) "ico" else "png"}"
 
-			icon = "../pancake.${if (OperatingSystem.current().isWindows) "ico" else "png"}"
-
-			val options = mutableListOf("--license-file", "../LICENSE")
+			val options = mutableListOf("--license-file", "../LICENSE", "--icon", icon)
 			if (OperatingSystem.current().isWindows) options += "--win-dir-chooser"
-
 			installerOptions.addAll(options.toList())
 
 			jvmArgs.addAll(listOf("-splash:\$APPDIR/splash.png"))
