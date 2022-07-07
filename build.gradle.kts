@@ -1,7 +1,7 @@
 import org.gradle.internal.os.OperatingSystem
 
 plugins {
-	kotlin("jvm") version "1.6.+"
+	kotlin("jvm") version "1.7.+"
 	id("org.openjfx.javafxplugin") version "0.+"
 	id("org.javamodularity.moduleplugin") version "1.+"
 	id("com.github.jk1.dependency-license-report") version "2.+"
