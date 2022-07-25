@@ -1,17 +1,14 @@
+import org.beryx.jlink.JPackageTask
 import org.gradle.internal.os.OperatingSystem
 
 plugins {
-	kotlin("jvm") version "1.6.+"
-	id("org.openjfx.javafxplugin") version "0.+"
-	id("org.javamodularity.moduleplugin") version "1.+"
+	kotlin("jvm") version "1.7.+"
 	id("com.github.jk1.dependency-license-report") version "2.+"
 	id("org.beryx.jlink") version "2.+"
 	id("org.ajoberstar.reckon") version "0.+"
 }
 
 description = "Common demo skeleton"
-
-val osName = if (OperatingSystem.current().isWindows) "windows" else if (OperatingSystem.current().isMacOsX) "macos" else "linux"
 
 tasks.wrapper {
 	distributionType = Wrapper.DistributionType.ALL
@@ -40,7 +37,7 @@ tasks.register("allJpackage") {
 	group = "build"
 	description = "Packages all subprojects"
 
-	dependsOn(subprojects.map { it.tasks.withType<org.beryx.jlink.JPackageTask>() })
+	dependsOn(subprojects.map { it.tasks.withType<JPackageTask>() })
 }
 
 dependencies {
@@ -49,66 +46,59 @@ dependencies {
 	api(libs.bundles.log)
 
 	val os = OperatingSystem.current()
-	if (os.isWindows) api(libs.bundles.pancake.natives.windows)
-	else if (os.isMacOsX) api(libs.bundles.pancake.natives.macos)
-	else api(libs.bundles.pancake.natives.linux)
+
+	// lwjgl
+	val lwjglPlatform = "natives-${if (os.isWindows) "windows" else if (os.isMacOsX) "macos" else "linux"}"
+	libs.bundles.lwjgl.get()
+		.map { it.module }
+		.forEach {
+			implementation("${it.group}:${it.name}::$lwjglPlatform")
+		}
+
+	// imgui
+	implementation(
+		if (os.isWindows) libs.imgui.windows
+		else if (os.isMacOsX) libs.imgui.macos
+		else libs.imgui.linux
+	)
 }
 
 allprojects {
 	apply(plugin = "kotlin")
-	apply(plugin = "org.openjfx.javafxplugin")
-	apply(plugin = "org.javamodularity.moduleplugin")
 
 	repositories {
 		mavenCentral()
-		maven {
-			url = uri("https://maven.pkg.github.com/kkorolyov/flub")
-			mavenContent {
-				releasesOnly()
-			}
-			credentials {
-				username = System.getenv("GITHUB_ACTOR")
-				password = System.getenv("GITHUB_TOKEN")
-			}
-		}
-		maven {
-			url = uri("https://oss.sonatype.org/content/repositories/snapshots")
-			mavenContent {
-				includeGroup("no.tornado")
-			}
-		}
-		maven {
-			url = uri("https://maven.pkg.github.com/kkorolyov/pancake")
-			mavenContent {
-				releasesOnly()
-			}
-			credentials {
-				username = System.getenv("GITHUB_ACTOR")
-				password = System.getenv("GITHUB_TOKEN")
+
+		listOf("flub", "pancake").forEach {
+			maven {
+				url = uri("https://maven.pkg.github.com/kkorolyov/$it")
+				credentials {
+					username = System.getenv("GITHUB_ACTOR")
+					password = System.getenv("GITHUB_TOKEN")
+				}
 			}
 		}
 	}
 
 	dependencyLocking {
 		lockAllConfigurations()
-
-		ignoredDependencies.addAll("dev.kkorolyov.pancake:audio-al-*", "dev.kkorolyov.pancake:graphics-gl-*", "dev.kkorolyov.pancake:input-glfw-*")
 	}
 
 	tasks.compileKotlin {
 		kotlinOptions {
 			jvmTarget = tasks.compileJava.get().targetCompatibility
 		}
-	}
-	javafx {
-		version = tasks.compileJava.get().targetCompatibility
-		modules("javafx.fxml", "javafx.web", "javafx.swing")
+		destinationDirectory.set(tasks.compileJava.get().destinationDirectory)
 	}
 }
 
 subprojects {
 	apply(plugin = "com.github.jk1.dependency-license-report")
 	apply(plugin = "org.beryx.jlink")
+
+	dependencies {
+		implementation(rootProject)
+	}
 
 	licenseReport {
 		excludeBoms = true

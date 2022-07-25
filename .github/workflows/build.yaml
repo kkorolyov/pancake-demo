@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      version: ${{ steps.tag.outputs.version }}
+      version: ${{ steps.build.outputs.version }}
 
     strategy:
       matrix:
@@ -21,48 +21,15 @@ jobs:
     steps:
       - id: checkout
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - id: java
-        uses: actions/setup-java@v3
+
+      - id: build
+        uses: kkorolyov/publish-gradle@0.4.0
         with:
           java-version: ${{ matrix.version }}
-          distribution: temurin
-          cache: gradle
-
-      - id: verify
-        if: ${{ github.ref != 'refs/heads/master' }}
-        shell: bash
-        run: ./gradlew build --no-daemon
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - id: tag
-        if: ${{ github.ref == 'refs/heads/master' }}
-        shell: bash
-        run: |
-          msg="${{ github.event.head_commit.message }}"
-
-          case "$msg" in
-            *MAJOR* | *BREAKING*)
-              scope=major
-              ;;
-            *MINOR*)
-              scope=minor
-              ;;
-            *PATCH* | *HOTFIX*)
-              scope=patch
-              ;;
-          esac
-
-          if [ -n "$scope" ]; then
-            ./gradlew reckonTagPush -Preckon.stage=final -Preckon.scope=$scope --no-daemon
-            echo "::set-output name=version::$(git describe)"
-          else
-            ./gradlew build --no-daemon
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          publish-branch: master
+          # just tag to publish per-platform downstream
+          publish-task: ""
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   package:
     runs-on: ${{ matrix.os }}

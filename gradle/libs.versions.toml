@@ -1,6 +1,5 @@
 [versions]
 flub = "0.+"
-tornadofx = "2.+"
 pancake = "0.+"
 
 slf4j = "1.+"
@@ -9,35 +8,35 @@ jackson = "2.+"
 
 lwjgl = "3.+"
 
+imgui = "1.+"
+
 [libraries]
 flub = { module = "dev.kkorolyov:flub", version.ref = "flub" }
-tornadofx = { module = "no.tornado:tornadofx", version.ref = "tornadofx" }
 
 pancake-platform = { module = "dev.kkorolyov.pancake:platform", version.ref = "pancake" }
 pancake-core = { module = "dev.kkorolyov.pancake:core", version.ref = "pancake" }
+pancake-audio-al = { module = "dev.kkorolyov.pancake:audio-al", version.ref = "pancake" }
+pancake-graphics-gl = { module = "dev.kkorolyov.pancake:graphics-gl", version.ref = "pancake" }
+pancake-input-glfw = { module = "dev.kkorolyov.pancake:input-glfw", version.ref = "pancake" }
 pancake-editor = { module = "dev.kkorolyov.pancake:editor", version.ref = "pancake" }
 pancake-editor-core = { module = "dev.kkorolyov.pancake:editor-core", version.ref = "pancake" }
 
-pancake-audio-windows = { module = "dev.kkorolyov.pancake:audio-al-windows", version.ref = "pancake" }
-pancake-graphics-windows = { module = "dev.kkorolyov.pancake:graphics-gl-windows", version.ref = "pancake" }
-pancake-input-windows = { module = "dev.kkorolyov.pancake:input-glfw-windows", version.ref = "pancake" }
+lwjgl = { module = "org.lwjgl:lwjgl" }
+lwjgl-glfw = { module = "org.lwjgl:lwjgl-glfw" }
+lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl" }
+lwjgl-openal = { module = "org.lwjgl:lwjgl-openal" }
+lwjgl-stb = { module = "org.lwjgl:lwjgl-stb" }
 
-pancake-audio-macos = { module = "dev.kkorolyov.pancake:audio-al-macos", version.ref = "pancake" }
-pancake-graphics-macos = { module = "dev.kkorolyov.pancake:graphics-gl-macos", version.ref = "pancake" }
-pancake-input-macos = { module = "dev.kkorolyov.pancake:input-glfw-macos", version.ref = "pancake" }
-
-pancake-audio-linux = { module = "dev.kkorolyov.pancake:audio-al-linux", version.ref = "pancake" }
-pancake-graphics-linux = { module = "dev.kkorolyov.pancake:graphics-gl-linux", version.ref = "pancake" }
-pancake-input-linux = { module = "dev.kkorolyov.pancake:input-glfw-linux", version.ref = "pancake" }
+imgui-windows = { module = "io.github.spair:imgui-java-natives-windows", version.ref = "imgui" }
+imgui-macos = { module = "io.github.spair:imgui-java-natives-macos", version.ref = "imgui" }
+imgui-linux = { module = "io.github.spair:imgui-java-natives-linux", version.ref = "imgui" }
 
 slf4j = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 log4j = { module = "org.apache.logging.log4j:log4j-slf4j18-impl", version.ref = "log4j" }
 jackson = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", version.ref = "jackson" }
 
 [bundles]
-stdlib = ["flub", "tornadofx"]
-pancake = ["pancake-platform", "pancake-core", "pancake-editor", "pancake-editor-core"]
-pancake-natives-windows = ["pancake-audio-windows", "pancake-graphics-windows", "pancake-input-windows"]
-pancake-natives-macos = ["pancake-audio-macos", "pancake-graphics-macos", "pancake-input-macos"]
-pancake-natives-linux = ["pancake-audio-linux", "pancake-graphics-linux", "pancake-input-linux"]
+stdlib = ["flub"]
+pancake = ["pancake-platform", "pancake-core", "pancake-audio-al", "pancake-graphics-gl", "pancake-input-glfw", "pancake-editor", "pancake-editor-core"]
+lwjgl = ["lwjgl", "lwjgl-glfw", "lwjgl-opengl", "lwjgl-openal", "lwjgl-stb"]
 log = ["slf4j", "log4j", "jackson"]

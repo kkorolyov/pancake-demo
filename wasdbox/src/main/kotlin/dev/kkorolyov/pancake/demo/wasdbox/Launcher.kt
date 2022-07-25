@@ -21,24 +21,24 @@ import dev.kkorolyov.pancake.core.system.ActionSystem
 import dev.kkorolyov.pancake.core.system.CappingSystem
 import dev.kkorolyov.pancake.core.system.DampingSystem
 import dev.kkorolyov.pancake.core.system.MovementSystem
+import dev.kkorolyov.pancake.demo.drawEnd
+import dev.kkorolyov.pancake.demo.drawStart
 import dev.kkorolyov.pancake.demo.editor
-import dev.kkorolyov.pancake.demo.loadContext
+import dev.kkorolyov.pancake.demo.inputSystem
 import dev.kkorolyov.pancake.demo.start
-import dev.kkorolyov.pancake.demo.swap
 import dev.kkorolyov.pancake.demo.toVector
-import dev.kkorolyov.pancake.demo.window
-import dev.kkorolyov.pancake.graphics.common.CameraQueue
-import dev.kkorolyov.pancake.graphics.common.component.Lens
-import dev.kkorolyov.pancake.graphics.common.system.CameraSystem
+import dev.kkorolyov.pancake.demo.toggleEditor
+import dev.kkorolyov.pancake.graphics.CameraQueue
+import dev.kkorolyov.pancake.graphics.component.Lens
 import dev.kkorolyov.pancake.graphics.gl.component.Model
 import dev.kkorolyov.pancake.graphics.gl.mesh.rectangle
 import dev.kkorolyov.pancake.graphics.gl.shader.Program
 import dev.kkorolyov.pancake.graphics.gl.shader.Shader
 import dev.kkorolyov.pancake.graphics.gl.system.DrawSystem
-import dev.kkorolyov.pancake.input.common.Compensated
-import dev.kkorolyov.pancake.input.common.Reaction
-import dev.kkorolyov.pancake.input.common.component.Input
-import dev.kkorolyov.pancake.input.glfw.system.InputSystem
+import dev.kkorolyov.pancake.graphics.system.CameraSystem
+import dev.kkorolyov.pancake.input.Compensated
+import dev.kkorolyov.pancake.input.Reaction
+import dev.kkorolyov.pancake.input.component.Input
 import dev.kkorolyov.pancake.input.glfw.toggle
 import dev.kkorolyov.pancake.input.glfw.whenKey
 import dev.kkorolyov.pancake.platform.Config
@@ -46,13 +46,13 @@ import dev.kkorolyov.pancake.platform.GameEngine
 import dev.kkorolyov.pancake.platform.Pipeline
 import dev.kkorolyov.pancake.platform.Resources
 import dev.kkorolyov.pancake.platform.action.Action
-import dev.kkorolyov.pancake.platform.math.Vectors
-import dev.kkorolyov.pancake.platform.plugin.DeferredConverterFactory
-import dev.kkorolyov.pancake.platform.plugin.Plugins
+import dev.kkorolyov.pancake.platform.math.Vector2
+import dev.kkorolyov.pancake.platform.math.Vector3
+import dev.kkorolyov.pancake.platform.registry.BasicParsers
 import dev.kkorolyov.pancake.platform.registry.Registry
-import dev.kkorolyov.pancake.platform.registry.ResourceReader
-import javafx.scene.paint.Color
+import dev.kkorolyov.pancake.platform.registry.ResourceConverters
 import org.lwjgl.glfw.GLFW
+import java.awt.Color
 
 private val cameraQueue = CameraQueue()
 
@@ -65,54 +65,58 @@ private val music: AudioSource by lazy {
 	AudioSource().apply {
 		gain = 0.2F
 		AudioStreamer({ Resources.inStream("assets/audio/bg.wav") })
-			// TODO VOLUME down
 			.attach(this)
 	}
 }
 
 val actions by lazy {
 	Resources.inStream("actions.yaml").use {
-		Registry<String, Action>().apply {
-			load(ResourceReader(Plugins.deferredConverter(DeferredConverterFactory.ActionStrat::class.java)).fromYaml(it))
+		Registry<Action>().apply {
+			putAll(BasicParsers.yaml().andThen(ResourceConverters.get(Action::class.java)).parse(it))
 		}
 	}
 }
 
-val gameEngine = GameEngine(
-	Pipeline(
-		InputSystem(window),
-		ActionSystem(),
-	),
-	Pipeline(
-		AccelerationSystem(),
-		CappingSystem(),
-		MovementSystem(),
-		DampingSystem(),
-	).withFrequency(100),
-	Pipeline(
-		AudioReceiverPositionSystem(),
-		AudioReceiverVelocitySystem(),
-		AudioPositionSystem(),
-		AudioVelocitySystem(),
-		AudioPlaySystem()
-	),
-	Pipeline(
-		CameraSystem(cameraQueue),
-		DrawSystem(cameraQueue, ::loadContext, ::swap)
+val gameEngine = GameEngine().apply {
+	setPipelines(
+		Pipeline(
+			inputSystem(),
+			ActionSystem(),
+		),
+		Pipeline(
+			AccelerationSystem(),
+			CappingSystem(),
+			MovementSystem(),
+			DampingSystem(),
+		).withFrequency(100),
+		Pipeline(
+			AudioReceiverPositionSystem(),
+			AudioReceiverVelocitySystem(),
+			AudioPositionSystem(),
+			AudioVelocitySystem(),
+			AudioPlaySystem()
+		),
+		Pipeline(
+			CameraSystem(cameraQueue),
+			drawStart(),
+			DrawSystem(cameraQueue),
+			editor(this),
+			drawEnd()
+		)
 	)
-)
+}
 
 val camera = gameEngine.entities.create().apply {
 	put(
-		Transform(Vectors.create(0.0, 0.0, 0.0)),
+		Transform(Vector3.of(0.0)),
 		Lens(
-			Vectors.create(32.0, 32.0),
-			Vectors.create(Config.get().getProperty("width").toDouble(), Config.get().getProperty("height").toDouble())
+			Vector2.of(32.0, 32.0),
+			Vector2.of(Config.get().getProperty("width").toDouble(), Config.get().getProperty("height").toDouble())
 		),
 		AudioReceiver(),
 		Input(
 			Reaction.matchType(
-				whenKey(GLFW.GLFW_KEY_F1 to Reaction { Action { editor() } })
+				whenKey(GLFW.GLFW_KEY_F1 to toggle(Compensated(Action { toggleEditor() }, Action.NOOP)))
 			)
 		),
 		ActionQueue()
@@ -122,15 +126,15 @@ val camera = gameEngine.entities.create().apply {
 val player = gameEngine.entities.create().apply {
 	put(
 		Mass(0.01),
-		Force(Vectors.create(0.0, 0.0, 0.0)),
-		Velocity(Vectors.create(0.0, 0.0, 0.0)),
-		VelocityCap(Vectors.create(20.0, 20.0, 20.0)),
-		Damping(Vectors.create(0.0, 0.0, 0.0)),
-		Transform(Vectors.create(0.0, 0.0, 0.0)),
+		Force(Vector3.of(0.0)),
+		Velocity(Vector3.of(0.0)),
+		VelocityCap(Vector3.of(20.0, 20.0, 20.0)),
+		Damping(Vector3.of(0.0)),
+		Transform(Vector3.of(0.0)),
 		AudioEmitter(music),
 		Model(
 			program,
-			rectangle(Vectors.create(1.0, 1.0), Color.AQUA.toVector())
+			rectangle(Vector2.of(1.0, 1.0), Color.BLUE.toVector())
 		),
 		Input(
 			Reaction.matchType(
