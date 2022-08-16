@@ -12,6 +12,10 @@ module dev.kkorolyov.pancake.demo {
 	requires org.lwjgl;
 	requires org.lwjgl.natives;
 	requires org.lwjgl.glfw;
+	requires org.lwjgl.glfw.natives;
+	requires org.lwjgl.opengl.natives;
+	requires org.lwjgl.openal.natives;
+	requires org.lwjgl.stb.natives;
 
 	requires transitive dev.kkorolyov.pancake.platform;
 	requires transitive dev.kkorolyov.pancake.core;

@@ -2,7 +2,7 @@ import org.beryx.jlink.JPackageTask
 import org.gradle.internal.os.OperatingSystem
 
 plugins {
-	kotlin("jvm") version "1.7.+"
+	kotlin("jvm") version "1.7.10"
 	id("com.github.jk1.dependency-license-report") version "2.+"
 	id("org.beryx.jlink") version "2.+"
 	id("org.ajoberstar.reckon") version "0.+"
@@ -82,6 +82,8 @@ allprojects {
 
 	dependencyLocking {
 		lockAllConfigurations()
+
+		ignoredDependencies.add("io.github.spair:imgui-java-natives*")
 	}
 
 	tasks.compileKotlin {

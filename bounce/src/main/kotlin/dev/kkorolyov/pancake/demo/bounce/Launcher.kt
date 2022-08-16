@@ -26,22 +26,21 @@ import dev.kkorolyov.pancake.demo.start
 import dev.kkorolyov.pancake.demo.toVector
 import dev.kkorolyov.pancake.demo.toggleEditor
 import dev.kkorolyov.pancake.graphics.CameraQueue
-import dev.kkorolyov.pancake.graphics.common.CameraQueue
-import dev.kkorolyov.pancake.graphics.common.component.Lens
-import dev.kkorolyov.pancake.graphics.common.system.CameraSystem
+import dev.kkorolyov.pancake.graphics.PixelBuffer
 import dev.kkorolyov.pancake.graphics.component.Lens
-import dev.kkorolyov.pancake.graphics.gl.component.Model
-import dev.kkorolyov.pancake.graphics.gl.mesh.oval
-import dev.kkorolyov.pancake.graphics.gl.mesh.rectangle
-import dev.kkorolyov.pancake.graphics.gl.shader.Program
-import dev.kkorolyov.pancake.graphics.gl.shader.Shader
+import dev.kkorolyov.pancake.graphics.component.Model
+import dev.kkorolyov.pancake.graphics.ellipse
+import dev.kkorolyov.pancake.graphics.gl.resource.GLMesh
+import dev.kkorolyov.pancake.graphics.gl.resource.GLProgram
+import dev.kkorolyov.pancake.graphics.gl.resource.GLShader
+import dev.kkorolyov.pancake.graphics.gl.resource.GLTexture
+import dev.kkorolyov.pancake.graphics.gl.resource.GLVertexBuffer
 import dev.kkorolyov.pancake.graphics.gl.system.DrawSystem
+import dev.kkorolyov.pancake.graphics.rectangle
 import dev.kkorolyov.pancake.graphics.system.CameraSystem
 import dev.kkorolyov.pancake.input.Compensated
 import dev.kkorolyov.pancake.input.Reaction
-import dev.kkorolyov.pancake.input.common.Compensated
-import dev.kkorolyov.pancake.input.common.Reaction
-import dev.kkorolyov.pancake.input.common.component.Input
+import dev.kkorolyov.pancake.input.component.Input
 import dev.kkorolyov.pancake.input.glfw.toggle
 import dev.kkorolyov.pancake.input.glfw.whenKey
 import dev.kkorolyov.pancake.platform.Config
@@ -55,11 +54,13 @@ import dev.kkorolyov.pancake.platform.math.Vector3
 import org.lwjgl.glfw.GLFW
 import java.awt.Color
 
+val blankTexture = GLTexture { PixelBuffer.blank2() }
+
 private val cameraQueue = CameraQueue()
 
-private val program = Program(
-	Shader(Shader.Type.VERTEX, Resources.inStream("shaders/literal.vert")),
-	Shader(Shader.Type.FRAGMENT, Resources.inStream("shaders/user.frag"))
+private val program = GLProgram(
+	GLShader(GLShader.Type.VERTEX, Resources.inStream("shaders/literal.vert")),
+	GLShader(GLShader.Type.FRAGMENT, Resources.inStream("shaders/user.frag"))
 )
 
 val gameEngine = GameEngine().apply {
@@ -126,7 +127,17 @@ val ball = gameEngine.entities.create().apply {
 		Velocity(Vector3.of(30.0, 15.0, 0.0)),
 		Model(
 			program,
-			oval(Vector2.of(2.0, 2.0), Color.BLUE.toVector())
+			GLMesh(
+				GLVertexBuffer {
+					val color = Color.BLUE.toVector()
+
+					ellipse(Vector2.of(2.0, 2.0)) { position, _ ->
+						add(position, color)
+					}
+				},
+				mode = GLMesh.Mode.TRIANGLE_FAN,
+				textures = listOf(blankTexture)
+			)
 		)
 	)
 }
@@ -141,7 +152,20 @@ fun makeWalls(radii: Vector2): List<Entity> {
 	val stop = Action { it[Velocity::class.java].value.scale(0.0) }
 
 	val bounds = Bounds.box(Vector3.of(radii.x * 2, radii.y * 2))
-	val graphic = Model(program, rectangle(Vector2.of(radii.x * 2, radii.y * 2), Color.RED.toVector()))
+	val graphic = Model(
+		program,
+		GLMesh(
+			GLVertexBuffer {
+				val color = Color.RED.toVector()
+
+				rectangle(Vector2.of(radii.x * 2, radii.y * 2)) { position, _ ->
+					add(position, color)
+				}
+			},
+			mode = GLMesh.Mode.TRIANGLE_FAN,
+			textures = listOf(blankTexture)
+		)
+	)
 
 	return listOf(
 		Vector3.of(-radii.x * 2, 0.0, 0.0),

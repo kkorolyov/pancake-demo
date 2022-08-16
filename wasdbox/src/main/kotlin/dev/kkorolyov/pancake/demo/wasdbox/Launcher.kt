@@ -29,12 +29,17 @@ import dev.kkorolyov.pancake.demo.start
 import dev.kkorolyov.pancake.demo.toVector
 import dev.kkorolyov.pancake.demo.toggleEditor
 import dev.kkorolyov.pancake.graphics.CameraQueue
+import dev.kkorolyov.pancake.graphics.PixelBuffer
 import dev.kkorolyov.pancake.graphics.component.Lens
-import dev.kkorolyov.pancake.graphics.gl.component.Model
-import dev.kkorolyov.pancake.graphics.gl.mesh.rectangle
-import dev.kkorolyov.pancake.graphics.gl.shader.Program
-import dev.kkorolyov.pancake.graphics.gl.shader.Shader
+import dev.kkorolyov.pancake.graphics.component.Model
+import dev.kkorolyov.pancake.graphics.gl.image
+import dev.kkorolyov.pancake.graphics.gl.resource.GLMesh
+import dev.kkorolyov.pancake.graphics.gl.resource.GLProgram
+import dev.kkorolyov.pancake.graphics.gl.resource.GLShader
+import dev.kkorolyov.pancake.graphics.gl.resource.GLTexture
+import dev.kkorolyov.pancake.graphics.gl.resource.GLVertexBuffer
 import dev.kkorolyov.pancake.graphics.gl.system.DrawSystem
+import dev.kkorolyov.pancake.graphics.rectangle
 import dev.kkorolyov.pancake.graphics.system.CameraSystem
 import dev.kkorolyov.pancake.input.Compensated
 import dev.kkorolyov.pancake.input.Reaction
@@ -56,10 +61,14 @@ import java.awt.Color
 
 private val cameraQueue = CameraQueue()
 
-private val program = Program(
-	Shader(Shader.Type.VERTEX, Resources.inStream("shaders/literal.vert")),
-	Shader(Shader.Type.FRAGMENT, Resources.inStream("shaders/user.frag"))
+private val program = GLProgram(
+	GLShader(GLShader.Type.VERTEX, Resources.inStream("shaders/literal.vert")),
+	GLShader(GLShader.Type.FRAGMENT, Resources.inStream("shaders/user.frag"))
 )
+
+private val wallTexture = GLTexture {
+	Resources.inStream("assets/textures/wall.jpg").use(PixelBuffer.Companion::image)
+}
 
 private val music: AudioSource by lazy {
 	AudioSource().apply {
@@ -134,7 +143,17 @@ val player = gameEngine.entities.create().apply {
 		AudioEmitter(music),
 		Model(
 			program,
-			rectangle(Vector2.of(1.0, 1.0), Color.BLUE.toVector())
+			GLMesh(
+				GLVertexBuffer {
+					val color = Color.WHITE.toVector()
+
+					rectangle(Vector2.of(1.0, 1.0)) { position, texCoord ->
+						add(position, color, texCoord)
+					}
+				},
+				mode = GLMesh.Mode.TRIANGLE_FAN,
+				textures = listOf(wallTexture)
+			)
 		),
 		Input(
 			Reaction.matchType(
