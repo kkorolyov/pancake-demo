@@ -1,73 +1,82 @@
 package dev.kkorolyov.pancake.demo
 
-import dev.kkorolyov.pancake.editor.openEditor
-import dev.kkorolyov.pancake.editor.registerEditor
+import dev.kkorolyov.pancake.editor.Container
+import dev.kkorolyov.pancake.editor.widget.Editor
+import dev.kkorolyov.pancake.editor.widget.Window
+import dev.kkorolyov.pancake.graphics.component.Lens
+import dev.kkorolyov.pancake.input.glfw.system.InputSystem
 import dev.kkorolyov.pancake.platform.Config
 import dev.kkorolyov.pancake.platform.GameEngine
-import javafx.application.Platform
-import javafx.scene.layout.StackPane
-import javafx.stage.Stage
-import org.lwjgl.glfw.GLFW
-import tornadofx.App
-import tornadofx.View
-import tornadofx.runLater
+import dev.kkorolyov.pancake.platform.GameSystem
+import dev.kkorolyov.pancake.platform.Pipeline
+import dev.kkorolyov.pancake.platform.Resources
+import org.lwjgl.glfw.GLFW.*
+import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL46.*
 
-val window = makeWindow()
+private const val editorSettings = "editor.ini"
+
+private val window = run {
+	if (!glfwInit()) throw IllegalStateException("Cannot init GLFW")
+	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE)
+	val window = glfwCreateWindow(Config.get().getProperty("width").toInt(), Config.get().getProperty("height").toInt(), Config.get().getProperty("title"), 0, 0)
+	if (window == 0L) throw IllegalStateException("Cannot create window")
+
+	glfwMakeContextCurrent(window)
+	glfwSwapInterval(1)
+
+	glfwShowWindow(window)
+
+	GL.createCapabilities()
+
+	window
+}
+private val container = Container(window).apply {
+	Resources.inStream(editorSettings)?.use(::load)
+}
+
+private lateinit var editor: Window
 
 /**
  * Starts a demo window running [engine].
  */
 fun start(engine: GameEngine) {
-	GLFW.glfwSetWindowCloseCallback(window) {
+	glfwSetWindowCloseCallback(window) {
 		engine.stop()
-		Platform.exit()
 	}.use { }
 
-	Platform.startup {
-		Editor(engine)
-	}
-
 	engine.start()
+
+	Resources.outStream(editorSettings)?.use(container::close) ?: container.close()
 }
 
-fun onResize(action: (width: Int, height: Int) -> Unit) {
-	GLFW.glfwSetFramebufferSizeCallback(window) { _, w, h -> action(w, h) }.use { }
+fun inputSystem() = InputSystem(window)
+
+fun drawStart() = Pipeline.run {
+	glfwMakeContextCurrent(window)
+	glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 }
 
-fun loadContext() {
-	GLFW.glfwMakeContextCurrent(window)
-	GLFW.glfwSwapInterval(1)
+fun drawEnd() = Pipeline.run {
+	glfwSwapBuffers(window)
 }
 
-fun swap() {
-	GLFW.glfwSwapBuffers(window)
-}
-
-fun editor() {
-	runLater { openEditor() }
-}
-
-private fun makeWindow(): Long {
-	if (!GLFW.glfwInit()) throw IllegalStateException("Cannot init GLFW")
-	val window = GLFW.glfwCreateWindow(Config.get().getProperty("width").toInt(), Config.get().getProperty("height").toInt(), Config.get().getProperty("title"), 0, 0)
-	if (window == 0L) throw IllegalStateException("Cannot create window")
-
-	GLFW.glfwShowWindow(window)
-
-	return window
-}
-
-class EmptyView : View() {
-	override val root = StackPane()
-}
-
-class Editor(engine: GameEngine) : App(EmptyView::class) {
-	init {
-		registerEditor(engine)
-		val stage = Stage()
-		start(stage)
-
-		Platform.setImplicitExit(false)
-		stage.hide()
+fun editor(engine: GameEngine): GameSystem {
+	editor = Window("Editor", Editor(engine)).apply { visible = false }
+	return Pipeline.run {
+		container(editor)
 	}
 }
+
+fun toggleEditor() {
+	editor.visible = !editor.visible
+}
+
+fun Lens.bindToWindow() {
+	glfwSetFramebufferSizeCallback(window) { _, w, h ->
+		size.x = w.toDouble()
+		size.y = h.toDouble()
+	}.use { }
+}
+
+fun setInputMode(mode: Int, value: Int) = glfwSetInputMode(window, mode, value)

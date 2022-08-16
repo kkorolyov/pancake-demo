@@ -10,16 +10,3 @@ forceRight:
 reset:
   position: [ ]
   orientation: [ ]
-
-moveUp:
-  start: forceUp
-  end: forceDown
-moveDown:
-  start: forceDown
-  end: forceUp
-moveLeft:
-  start: forceLeft
-  end: forceRight
-moveRight:
-  start: forceRight
-  end: forceLeft
