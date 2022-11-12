@@ -10,11 +10,14 @@ import dev.kkorolyov.pancake.core.component.movement.Force
 import dev.kkorolyov.pancake.core.component.movement.Mass
 import dev.kkorolyov.pancake.core.component.movement.Velocity
 import dev.kkorolyov.pancake.core.component.movement.VelocityCap
+import dev.kkorolyov.pancake.core.component.tag.Collidable
+import dev.kkorolyov.pancake.core.component.tag.Correctable
 import dev.kkorolyov.pancake.core.system.AccelerationSystem
 import dev.kkorolyov.pancake.core.system.ActionSystem
 import dev.kkorolyov.pancake.core.system.CappingSystem
 import dev.kkorolyov.pancake.core.system.ChainSystem
 import dev.kkorolyov.pancake.core.system.CollisionSystem
+import dev.kkorolyov.pancake.core.system.CorrectionSystem
 import dev.kkorolyov.pancake.core.system.DampingSystem
 import dev.kkorolyov.pancake.core.system.IntersectionSystem
 import dev.kkorolyov.pancake.core.system.MovementSystem
@@ -70,6 +73,7 @@ private val gameEngine = GameEngine().apply {
 			ChainSystem(),
 			DampingSystem(),
 			IntersectionSystem(),
+			CorrectionSystem(),
 			CollisionSystem(),
 			PhysicsCleanupSystem()
 		).withFrequency(100),
@@ -107,7 +111,9 @@ private val cursor = gameEngine.entities.create().apply {
 		Transform(Vector3.of(0.0)),
 //		Velocity(Vectors.create(0.0, 0.0, 0.0)),
 //		Mass(1.0),
-		Bounds.round(0.5).apply { isCorrectable = true },
+		Bounds.round(0.5),
+		Collidable(),
+		Correctable(),
 		Model(
 			program,
 			GLMesh(
@@ -204,7 +210,9 @@ private fun makeStrand(root: Vector3, length: Int) {
 			Mass(1.0),
 			Force(Vector3.of(0.0, -9.81, 0.0)),
 			Chain(root, 1.1),
-			Bounds.round(0.5).apply { isCorrectable = true },
+			Bounds.round(0.5),
+			Collidable(),
+			Correctable(),
 			Model(
 				program,
 				GLMesh(

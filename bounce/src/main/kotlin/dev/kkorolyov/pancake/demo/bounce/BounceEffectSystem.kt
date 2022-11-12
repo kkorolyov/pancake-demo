@@ -5,6 +5,7 @@ import dev.kkorolyov.pancake.audio.al.AudioSource
 import dev.kkorolyov.pancake.audio.al.component.AudioEmitter
 import dev.kkorolyov.pancake.core.component.Transform
 import dev.kkorolyov.pancake.core.component.event.Intersected
+import dev.kkorolyov.pancake.core.component.tag.Collidable
 import dev.kkorolyov.pancake.demo.toVector
 import dev.kkorolyov.pancake.graphics.component.Model
 import dev.kkorolyov.pancake.graphics.ellipse
@@ -15,10 +16,9 @@ import dev.kkorolyov.pancake.platform.GameSystem
 import dev.kkorolyov.pancake.platform.Resources
 import dev.kkorolyov.pancake.platform.entity.Entity
 import dev.kkorolyov.pancake.platform.math.Vector2
-import dev.kkorolyov.pancake.platform.math.Vector3
 import java.awt.Color
 
-class BounceEffectSystem(private val program: Program) : GameSystem(Transform::class.java, Intersected::class.java) {
+class BounceEffectSystem(private val program: Program) : GameSystem(Transform::class.java, Intersected::class.java, Collidable::class.java) {
 	private val source: AudioSource by lazy {
 		AudioSource().apply {
 			refDistance = 20F
@@ -40,15 +40,23 @@ class BounceEffectSystem(private val program: Program) : GameSystem(Transform::c
 		textures = listOf(blankTexture)
 	)
 
-	override fun update(entity: Entity, dt: Long) {
-		source.play()
+	private val events = mutableSetOf<Intersected>()
 
-		create().apply {
-			put(
-				Transform(Vector3.of(entity[Transform::class.java].globalPosition)),
-				Model(program, mesh),
-				AudioEmitter(source)
-			)
+	override fun update(entity: Entity, dt: Long) {
+		val event = entity[Intersected::class.java]
+		if (events.add(event)) {
+			create().apply {
+				put(
+					Transform(entity[Transform::class.java].globalPosition),
+					Model(program, mesh),
+					AudioEmitter(source)
+				)
+			}
+			source.play()
 		}
+	}
+
+	override fun after() {
+		events.clear()
 	}
 }

@@ -10,6 +10,8 @@ import dev.kkorolyov.pancake.core.component.ActionQueue
 import dev.kkorolyov.pancake.core.component.Bounds
 import dev.kkorolyov.pancake.core.component.Transform
 import dev.kkorolyov.pancake.core.component.movement.Velocity
+import dev.kkorolyov.pancake.core.component.tag.Collidable
+import dev.kkorolyov.pancake.core.component.tag.Correctable
 import dev.kkorolyov.pancake.core.system.AccelerationSystem
 import dev.kkorolyov.pancake.core.system.ActionSystem
 import dev.kkorolyov.pancake.core.system.CappingSystem
@@ -123,8 +125,10 @@ val walls = makeWalls(
 val ball = gameEngine.entities.create().apply {
 	put(
 		Transform(Vector3.of(0.0, 0.0, 0.0)),
-		Bounds.round(1.0).apply { isCorrectable = true },
+		Bounds.round(1.0),
+		Correctable(),
 		Velocity(Vector3.of(30.0, 15.0, 0.0)),
+		Collidable(),
 		Model(
 			program,
 			GLMesh(
@@ -168,26 +172,26 @@ fun makeWalls(radii: Vector2): List<Entity> {
 	)
 
 	return listOf(
-		Vector3.of(-radii.x * 2, 0.0, 0.0),
-		Vector3.of(radii.x * 2, 0.0, 0.0),
-		Vector3.of(0.0, -radii.y * 2, 0.0),
-		Vector3.of(0.0, radii.y * 2, 0.0)
+		Vector3.of(-radii.x * 2, 0.0),
+		Vector3.of(radii.x * 2, 0.0),
+		Vector3.of(0.0, -radii.y * 2),
+		Vector3.of(0.0, radii.y * 2)
 	).map {
 		gameEngine.entities.create().apply {
 			put(
 				Transform(it),
-//				Velocity(Vectors.create3()),
+				Velocity(Vector3.of()),
 				ActionQueue(),
-//				Input(
-//					Reaction.matchType(
-//						whenKey(
-//							GLFW.GLFW_KEY_W to toggle(Compensated(moveUp, stop)),
-//							GLFW.GLFW_KEY_A to toggle(Compensated(moveLeft, stop)),
-//							GLFW.GLFW_KEY_S to toggle(Compensated(moveDown, stop)),
-//							GLFW.GLFW_KEY_D to toggle(Compensated(moveRight, stop))
-//						)
-//					)
-//				),
+				Input(
+					Reaction.matchType(
+						whenKey(
+							GLFW.GLFW_KEY_W to toggle(Compensated(moveUp, stop)),
+							GLFW.GLFW_KEY_A to toggle(Compensated(moveLeft, stop)),
+							GLFW.GLFW_KEY_S to toggle(Compensated(moveDown, stop)),
+							GLFW.GLFW_KEY_D to toggle(Compensated(moveRight, stop))
+						)
+					)
+				),
 				bounds,
 				graphic
 			)
